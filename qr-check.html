@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部への通信・外部プログラムの読み込みを禁止（車両情報・写真を社外へ出さないため） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#12508f">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="icons/icon-192.png">
+<title>車検証QRテスト - 車両法定点検（OCR版）</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .qc-cam { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; aspect-ratio: 3 / 4; max-height: 62vh; }
+  .qc-cam video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .qc-guide { position: absolute; left: 5%; right: 5%; top: 32%; height: 30%; border-radius: 10px;
+              box-shadow: 0 0 0 9999px rgba(0,0,0,.45); outline: 3px solid #ffd54f; }
+  .qc-msg { position: absolute; left: 10px; right: 10px; bottom: 10px; margin: 0; padding: 8px 10px; border-radius: 10px;
+            background: rgba(0,0,0,.6); color: #fff; font-size: 13px; text-align: center; }
+  .qc-progress { display: grid; gap: 8px; margin: 4px 0 0; }
+  .qc-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .qc-dots { display: flex; gap: 5px; }
+  .qc-dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c5ccd6; }
+  .qc-dots i.on { background: var(--ok); border-color: var(--ok); }
+  .qc-result dd { font-size: 18px; font-weight: 700; letter-spacing: .02em; }
+  .qc-tools { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .qc-tools .btn { margin: 0; flex: 1; padding: 12px; font-size: 15px; }
+  .qc-zoom { width: 100%; }
+  pre.qc-raw { white-space: pre-wrap; word-break: break-all; font-size: 12px; background: #f2f4f7; padding: 8px; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <a class="back" href="index.html">&#8592;</a>
+  <h1>車検証QRテスト</h1>
+  <span class="env">保存しません</span>
+</div>
+
+<main>
+  <div class="banner info small">
+    テスト用のページです。車検証の二次元コード（QR）から登録番号・車台番号を読めるかを確かめます。
+    読んだ内容は<b>この画面に表示するだけ</b>で、保存も送信もしません。
+  </div>
+
+  <div class="card">
+    <h2>車検証の右下のQRを写す</h2>
+    <p class="small muted" style="margin-top:0">
+      電子車検証の右下にある小さなQR（<b>2つ並び</b>に登録番号・車台番号、3つ並びに型式など）を黄色の枠に入れ、
+      10〜15cmくらいの距離でピントを合わせてください。1つずつ写しても大丈夫です。
+    </p>
+    <div class="qc-cam">
+      <video playsinline muted autoplay></video>
+      <div class="qc-guide"></div>
+      <p class="qc-msg" id="cam-msg">カメラを起動しています…</p>
+    </div>
+    <input type="range" class="qc-zoom" id="zoom" hidden>
+    <div class="qc-tools">
+      <button type="button" class="btn secondary" id="btn-photo">写真から読む</button>
+      <button type="button" class="btn secondary" id="btn-torch" hidden>ライト</button>
+      <button type="button" class="btn ghost" id="btn-reset">やり直す</button>
+    </div>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+
+  <div class="card">
+    <h2>読み取りの状況</h2>
+    <div class="qc-progress" id="progress"><p class="small muted" style="margin:0">まだQRを読めていません</p></div>
+    <p class="small muted" id="elapsed" style="margin:8px 0 0"></p>
+  </div>
+
+  <div class="card qc-result">
+    <h2>取り出した内容</h2>
+    <dl class="kv">
+      <dt>自動車登録番号</dt><dd id="r-plate">―</dd>
+      <dt>車台番号</dt><dd id="r-chassis">―</dd>
+      <dt>型式</dt><dd id="r-model">―</dd>
+      <dt>原動機型式</dt><dd id="r-engine">―</dd>
+      <dt>車検満了日</dt><dd id="r-expiry">―</dd>
+      <dt>初度登録年月</dt><dd id="r-first">―</dd>
+    </dl>
+    <details style="margin-top:12px">
+      <summary class="small">読み取った中身（参考）</summary>
+      <pre class="qc-raw" id="raw"></pre>
+    </details>
+  </div>
+
+  <p class="center small muted">
+    テストの結果は「登録番号・車台番号が正しく出たか」「何秒くらいで読めたか」だけ教えてください。<br>
+    画面の写真や実際の番号は送らないでください。
+  </p>
+</main>
+
+<script src="config/app-config.js"></script>
+<script src="src/common/util.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="src/qr/shakenshoQr.js"></script>
+<script src="src/pages/qr-check.js"></script>
+</body>
+</html>
