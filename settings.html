@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部への通信・外部プログラムの読み込みを禁止（車両情報・写真を社外へ出さないため） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#12508f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="点検OCR">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>設定 - 車両法定点検（OCR版）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="appbar">
+  <a class="back" href="index.html">&#8592;</a>
+  <h1>設定・使い方</h1>
+  <span class="env" id="ver">―</span>
+</div>
+
+<main>
+  <section class="card">
+    <h2>いつも使う入力値</h2>
+    <p class="small muted">点検入力の画面に最初から入れておく値です（点検を保存すると自動で更新されます）。</p>
+    <label class="field"><span>点検担当者名</span><input type="text" id="pref-inspectorName" maxlength="40" autocomplete="name"></label>
+    <label class="field"><span>整備管理者名</span><input type="text" id="pref-supervisorName" maxlength="40"></label>
+    <label class="field"><span>点検営業所</span><input type="text" id="pref-branch" maxlength="40"></label>
+    <button type="button" class="btn secondary" id="btn-save-prefs">保存する</button>
+  </section>
+
+  <section class="card">
+    <h2>文字読み取り（OCR）の準備</h2>
+    <p class="small muted">
+      初めて「読取」を使うときに、文字読み取りのデータ（約13MB）を読み込みます。
+      電波の弱い現場で使う前に、Wi-Fiのある場所で一度ここを押しておくと安心です。
+    </p>
+    <p class="small" id="ocr-status">未確認</p>
+    <button type="button" class="btn secondary" id="btn-warmup">今すぐ準備する</button>
+  </section>
+
+  <section class="card">
+    <h2>この端末の点検記録</h2>
+    <dl class="kv">
+      <dt>保存件数</dt><dd id="rec-count">―</dd>
+      <dt>使用容量</dt><dd id="usage">―</dd>
+    </dl>
+    <p class="small muted" style="margin-top:12px">
+      正式な記録は、共有・印刷したPDFです。端末の容量が気になるときは古い記録を削除してください。
+    </p>
+    <div class="btn-row">
+      <select id="purge-days" style="flex:1">
+        <option value="365">1年より前の記録</option>
+        <option value="180">半年より前の記録</option>
+        <option value="90" selected>3ヶ月より前の記録</option>
+      </select>
+      <button type="button" class="btn ghost" id="btn-purge" style="flex:1">を削除</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>使い方</h2>
+    <ol class="small" style="padding-left:1.4em;margin:0">
+      <li>車両のQRシールを読み取る（管理番号が記録簿の「YDEC№」になります）</li>
+      <li>「自動車登録番号」「車台番号」の「読取」を押し、ナンバープレートや車検証を撮る</li>
+      <li>読み取った文字を実物と見比べて確認（違っていれば直す）</li>
+      <li>点検項目を入力して「点検を完了」</li>
+      <li>記録簿PDFを「印刷・共有」して、車載用コピーを車両に搭載</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>安全性について</h2>
+    <ul class="small" style="padding-left:1.2em;margin:0">
+      <li>このアプリには車両の一覧（車両マスタ）が入っていません。公開サイトに置いても車両情報は漏れません。</li>
+      <li>文字の読み取りはスマホの中だけで行います。撮影した画像はどこにも送信しません。</li>
+      <li>点検記録はこのスマホの中だけに保存します。外部に出るのは、自分で「共有」したPDFだけです。</li>
+      <li>アプリは外部のサーバーと通信できない設定（コンテンツ セキュリティ ポリシー）にしています。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>端末のデータを全部消す</h2>
+    <p class="small muted">この端末に保存した点検記録・入力途中の内容・いつも使う入力値をすべて削除します。元に戻せません。</p>
+    <button type="button" class="btn ghost" id="btn-wipe" style="color:#c62828;border-color:#f3c3c0">すべて削除する</button>
+  </section>
+</main>
+<script src="config/app-config.js"></script>
+<script src="src/common/util.js"></script>
+<script src="src/storage/StorageAdapter.js"></script>
+<script src="src/storage/LocalStorageAdapter.js"></script>
+<script src="src/storage/storageFactory.js"></script><script src="src/ocr/ocrParser.js"></script>
+<script src="vendor/tesseract/tesseract.min.js"></script>
+<script src="src/ocr/ocrEngine.js"></script>
+<script src="src/pages/settings.js"></script>
+</body>
+</html>

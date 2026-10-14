@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部への通信・外部プログラムの読み込みを禁止（車両情報・写真を社外へ出さないため） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#12508f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="点検OCR">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>点検入力 - 車両法定点検（OCR版）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="appbar">
+  <a class="back" href="index.html" id="back">&#8592;</a>
+  <h1 id="title">点検入力</h1>
+  <span class="env">端末内保存</span>
+</div>
+
+<main>
+  <div id="vehicle-box"></div>
+
+  <div id="draft-banner" class="banner info" hidden>
+    <span id="draft-text">途中まで入力した内容を復元しました。</span>
+    <button type="button" class="link-btn" id="draft-discard">破棄して最初から</button>
+  </div>
+
+  <form id="form" autocomplete="off" novalidate>
+
+    <!-- ===================================================== 車両情報（OCR） -->
+    <section class="card">
+      <h2>車両情報</h2>
+
+      <label class="field">
+        <span>管理番号（YDEC№・QRコードの内容）</span>
+        <input type="text" id="vehicleId" readonly>
+      </label>
+
+      <button type="button" class="btn-cert" data-ocr="cert">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+        <span>車検証を撮って読み取る<small>自動車登録番号・車台番号をまとめて入力</small></span>
+      </button>
+      <p class="or-line">うまく読めないときは 1項目ずつ「読取」・手入力</p>
+
+      <div class="field">
+        <label class="field-label" for="plateNumber">自動車登録番号<span class="required-mark">*</span></label>
+        <div class="input-cam">
+          <input type="text" id="plateNumber" placeholder="例：金沢400わ1234" autocomplete="off" enterkeyhint="next">
+          <button type="button" class="cam-btn" data-ocr="plate" aria-label="自動車登録番号をカメラで読み取る（車検証の欄・ナンバープレート）">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+            読取
+          </button>
+        </div>
+        <p class="field-note" id="plateNumber-note" hidden></p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="chassisNo">車台番号<span class="required-mark">*</span></label>
+        <div class="input-cam">
+          <input type="text" id="chassisNo" placeholder="例：NHR85-0001234" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next">
+          <button type="button" class="cam-btn" data-ocr="chassis" aria-label="車台番号をカメラで読み取る（車検証の欄・車体の打刻）">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+            読取
+          </button>
+        </div>
+        <p class="field-note" id="chassisNo-note" hidden></p>
+      </div>
+
+      <label class="field">
+        <span>車種</span>
+        <input type="text" id="vehicleType" list="type-list" maxlength="40">
+        <datalist id="type-list"></datalist>
+      </label>
+
+      <div class="field">
+        <span class="field-label">点検区分（記録簿の種類）</span>
+        <div class="seg wide" id="cycle-seg">
+          <label><input type="radio" name="cycle" value="3month"><span>３ヶ月点検</span></label>
+          <label><input type="radio" name="cycle" value="6month"><span>６ヶ月点検</span></label>
+        </div>
+        <p class="small muted" id="cycle-note" style="margin:6px 0 0"></p>
+      </div>
+
+      <p class="small muted tip">
+        iPhoneの場合は、入力欄を長押し →「テキストをスキャン」でも読み取れます。
+      </p>
+    </section>
+
+    <!-- ======================================================== 点検情報 -->
+    <section class="card">
+      <h2>点検情報</h2>
+      <label class="field">
+        <span>点検担当者名<span class="required-mark">*</span></span>
+        <input type="text" id="inspectorName" maxlength="40" autocomplete="name">
+      </label>
+      <label class="field">
+        <span>整備管理者名</span>
+        <input type="text" id="supervisorName" maxlength="40">
+      </label>
+      <label class="field">
+        <span>点検営業所</span>
+        <input type="text" id="branch" maxlength="40">
+      </label>
+      <label class="field">
+        <span>点検時走行距離（km）</span>
+        <input type="number" id="odometer" inputmode="numeric" min="0" max="9999999">
+      </label>
+      <div class="btn-row">
+        <label class="field" style="flex:1">
+          <span>車検満了日</span>
+          <input type="date" id="shakenExpiry">
+        </label>
+        <label class="field" style="flex:1">
+          <span>車検時走行距離（km）</span>
+          <input type="number" id="shakenOdometer" inputmode="numeric" min="0" max="9999999">
+        </label>
+      </div>
+      <div class="btn-row">
+        <label class="field" style="flex:1">
+          <span>前回点検日</span>
+          <input type="date" id="previousInspectionDate">
+        </label>
+        <label class="field" style="flex:1">
+          <span>前回点検時走行距離（km）</span>
+          <input type="number" id="previousOdometer" inputmode="numeric" min="0" max="9999999">
+        </label>
+      </div>
+      <p class="small muted" id="prefill-note">点検日時は保存時に自動で記録されます。</p>
+    </section>
+
+    <div class="banner info small" id="omit-note"></div>
+
+    <!-- ======================================================== 点検項目 -->
+    <div id="items"></div>
+
+    <section class="card">
+      <h2>所見・特記事項</h2>
+      <textarea id="remarks" rows="4" maxlength="1000" placeholder="全体を通しての所見があれば入力してください"></textarea>
+    </section>
+  </form>
+</main>
+
+<div class="progress-bar">
+  <div class="meter"><i id="meter"></i></div>
+  <span class="count" id="count">0 / 0</span>
+  <button type="button" class="btn" id="submit">点検を完了</button>
+</div>
+
+<script src="config/app-config.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/tesseract/tesseract.min.js"></script>
+<script src="src/common/util.js"></script>
+<script src="src/storage/StorageAdapter.js"></script>
+<script src="src/storage/LocalStorageAdapter.js"></script>
+<script src="src/storage/storageFactory.js"></script>
+<script src="src/form/formRenderer.js"></script>
+<script src="src/pdf/pdfGenerator.js"></script>
+<script src="src/ocr/ocrParser.js"></script>
+<script src="src/ocr/ocrEngine.js"></script>
+<script src="src/ocr/ocrCapture.js"></script>
+<script src="src/pages/inspect.js"></script>
+</body>
+</html>

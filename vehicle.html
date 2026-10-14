@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部への通信・外部プログラムの読み込みを禁止（車両情報・写真を社外へ出さないため） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#12508f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="点検OCR">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>車両 - 車両法定点検（OCR版）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="appbar">
+  <a class="back" href="index.html">&#8592;</a>
+  <h1>車両の確認</h1>
+  <span class="env">端末内保存</span>
+</div>
+
+<main>
+  <div id="content"><p class="muted">読み込み中…</p></div>
+</main>
+<script src="config/app-config.js"></script>
+<script src="src/common/util.js"></script>
+<script src="src/storage/StorageAdapter.js"></script>
+<script src="src/storage/LocalStorageAdapter.js"></script>
+<script src="src/storage/storageFactory.js"></script><script src="src/pages/common-list.js"></script>
+<script src="src/pages/vehicle.js"></script>
+</body>
+</html>

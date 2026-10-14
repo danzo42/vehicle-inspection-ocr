@@ -1,0 +1,443 @@
+/* =============================================================================
+ * style.css ―― 現場のスマホで使うことを前提にした画面デザイン（02の style.css ＋ OCR版の追加分）
+ *   ・手袋でも押せるよう、ボタンとタップ範囲を大きめに
+ *   ・屋外でも読めるよう、コントラストを強めに
+ * ========================================================================== */
+
+:root {
+  --bg:        #f4f6f8;
+  --card:      #ffffff;
+  --text:      #1a1d21;
+  --muted:     #667085;
+  --line:      #dfe3e8;
+  --primary:   #12508f;
+  --primary-d: #0d3c6d;
+  --ok:        #1b7f3b;
+  --warn:      #c65500;
+  --danger:    #c62828;
+  --radius:    12px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", "Noto Sans JP", "Meiryo", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ------------------------------------------------------------------ レイアウト */
+.appbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--primary); color: #fff;
+  padding: 12px 16px;
+  /* iPhoneのノッチ（画面上部の切り欠き）に文字が隠れないようにする */
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.appbar h1 { font-size: 17px; margin: 0; font-weight: 600; flex: 1; }
+.appbar .back {
+  color: #fff; text-decoration: none; font-size: 22px; line-height: 1;
+  padding: 4px 8px; border-radius: 8px; background: rgba(255,255,255,.15);
+}
+.appbar .env {
+  font-size: 11px; background: rgba(255,255,255,.2);
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+
+main {
+  padding: 16px; max-width: 780px;
+  /* 画面下の進捗バー＋iPhoneのホームバーの分だけ余白を空ける */
+  margin: 0 auto calc(96px + env(safe-area-inset-bottom));
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card h2 { margin: 0 0 12px; font-size: 17px; }
+.card h3.unit {
+  margin: 16px 0 6px; font-size: 14px; color: var(--muted);
+  border-left: 4px solid var(--primary); padding-left: 8px; font-weight: 600;
+}
+
+/* -------------------------------------------------------------------- ボタン */
+.btn {
+  display: block; width: 100%;
+  padding: 16px; margin: 10px 0;
+  font-size: 17px; font-weight: 600;
+  border: none; border-radius: var(--radius);
+  background: var(--primary); color: #fff;
+  cursor: pointer; text-align: center; text-decoration: none;
+}
+.btn:active { background: var(--primary-d); }
+.btn.secondary { background: #fff; color: var(--primary); border: 2px solid var(--primary); }
+.btn.ghost     { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
+.btn.big       { padding: 22px 16px; font-size: 19px; }
+.btn:disabled  { opacity: .5; cursor: not-allowed; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { margin: 10px 0; }
+
+.btn-all-ok {
+  display: block; width: 100%; min-height: 44px;
+  background: #eef4fa; color: var(--primary);
+  border: 1px solid #cfe0f0; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-weight: 600; margin-bottom: 8px; cursor: pointer;
+}
+
+/* --------------------------------------------------------------- 入力フォーム */
+label.field { display: block; margin: 12px 0; }
+label.field > span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+input[type=text], input[type=number], input[type=date], select, textarea {
+  width: 100%; padding: 12px;
+  font-size: 16px; /* iOSで自動ズームさせないため16px以上 */
+  border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; color: var(--text);
+}
+.required-mark { color: var(--danger); margin-left: 4px; }
+
+/* 備品確認（有／無） */
+.pre-checks { display: grid; gap: 10px; }
+.pre-check { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pre-check-label { font-weight: 600; }
+.seg { display: flex; gap: 6px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; }
+.seg span {
+  display: inline-block; padding: 10px 22px;
+  border: 2px solid var(--line); border-radius: 8px; cursor: pointer;
+}
+.seg input:checked + span { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* 対象車種の選択（丸いボタン） */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; }
+.chip span {
+  display: inline-block; padding: 9px 14px; min-height: 44px; line-height: 22px;
+  border: 2px solid var(--line); border-radius: 999px; cursor: pointer; font-size: 14px; background: #fff;
+}
+.chip input:checked + span { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ------------------------------------------------------------- 点検項目1件分 */
+.item {
+  padding: 10px 4px; border-top: 1px solid var(--line);
+}
+.item:first-of-type { border-top: none; }
+.item.filled { background: #fbfdff; }
+.item.warn   { background: #fff8f0; }
+.item.flash  { animation: flash 1.2s ease; }
+@keyframes flash { 0%, 100% { background: transparent; } 30% { background: #ffe9b3; } }
+
+.item-label { font-size: 15px; font-weight: 500; margin-bottom: 6px; line-height: 1.45; }
+/* 省略できない項目：紙の記録簿と同じく太字＋下線 */
+.item.required .item-label { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.badge-opt {
+  font-size: 11px; color: var(--muted); background: #eef0f3;
+  border-radius: 999px; padding: 2px 8px; margin-left: 8px; font-weight: 400;
+}
+
+.judge { display: flex; gap: 6px; }
+.judge-opt { position: relative; }
+.judge-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+.judge-opt .mark { font-weight: 700; margin-right: 4px; }
+.judge-opt, .judge-more {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px;                      /* 手袋でも押しやすい高さ */
+  border: 2px solid var(--line); border-radius: 10px;
+  padding: 6px 8px; font-size: 15px; cursor: pointer; background: #fff; color: var(--text);
+  user-select: none; -webkit-user-select: none;
+}
+.judge .judge-good { flex: 1.6; font-size: 16px; }   /* 一番よく押す「良好」を大きく */
+.judge .judge-skip,
+.judge .judge-na   { flex: 1; font-size: 13px; padding: 6px 4px; white-space: nowrap; }
+.judge .judge-na .mark { display: none; }            /* 狭いので「該当なし」の文字だけ出す */
+.judge-more { flex: 1.1; font-family: inherit; font-weight: 600; color: var(--muted); white-space: nowrap; font-size: 13px; padding: 6px 4px; }
+.judge-more.selected { background: var(--warn); border-color: var(--warn); color: #fff; }
+
+.judge-actions {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 6px;
+}
+.judge-actions[hidden] { display: none; }
+/* 記号を上、文字を下に縦並び（「給油水」が折り返さないように） */
+.judge-actions .judge-opt { flex-direction: column; min-height: 50px; padding: 2px; font-size: 13px; line-height: 1.25; }
+.judge-actions .judge-opt .mark { margin: 0; font-size: 15px; }
+
+/* 選択中の色（:has() は古いスマホで効かないため、JSで付ける .on クラスで判定する） */
+.judge-opt.on              { background: var(--primary); color: #fff; border-color: var(--primary); }
+.judge-good.on             { background: var(--ok);      border-color: var(--ok); }
+.judge-action.on           { background: var(--warn);    border-color: var(--warn); }
+.judge-skip.on             { background: var(--muted);   border-color: var(--muted); }
+.judge-na.on               { background: #475467;        border-color: #475467; color: #fff; }
+
+/* 中分類の見出しと「まとめて該当なし」ボタン */
+.card h3.unit { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.unit-na {
+  flex: none; font-family: inherit; font-size: 12px; font-weight: 500;
+  color: #475467; background: #f2f4f7; border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 10px; min-height: 32px; cursor: pointer;
+}
+
+
+
+/* -------------------------------------------------------------- QRスキャナ */
+#reader { width: 100%; border-radius: var(--radius); overflow: hidden; background: #000; }
+#reader video { width: 100% !important; height: auto !important; display: block; }
+.scan-hint { text-align: center; color: var(--muted); font-size: 14px; margin: 10px 0; }
+
+/* ----------------------------------------------------------------- 車両情報 */
+.vehicle-head {
+  background: linear-gradient(135deg, var(--primary), #1b6fb8);
+  color: #fff; border-radius: var(--radius); padding: 18px; margin-bottom: 14px;
+}
+.vehicle-head .vid { font-size: 30px; font-weight: 700; letter-spacing: .04em; }
+.vehicle-head .vtype { font-size: 15px; opacity: .92; }
+
+dl.kv { margin: 0; display: grid; grid-template-columns: 40% 60%; row-gap: 8px; }
+dl.kv dt { color: var(--muted); font-size: 14px; }
+dl.kv dd { margin: 0; font-size: 15px; word-break: break-all; }
+
+/* ---------------------------------------------------------- 記録簿プレビュー */
+.sheet-preview { margin-bottom: 4px; }
+.sheet-preview img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff;
+}
+
+/* --------------------------------------------------------------------- 判定 */
+.verdict { padding: 14px; border-radius: var(--radius); font-weight: 700; font-size: 18px; text-align: center; }
+.verdict.ok   { background: #e8f5e9; color: #1b5e20; }
+.verdict.ng   { background: #fff3e0; color: #e65100; }
+.verdict.none { background: #f0f0f0; color: var(--muted); font-weight: 500; }
+
+/* ----------------------------------------------------------------- 進捗バー */
+.progress-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: #fff; border-top: 1px solid var(--line);
+  padding: 10px 16px 14px; display: flex; align-items: center; gap: 12px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));   /* iPhoneのホームバー分 */
+  box-shadow: 0 -2px 8px rgba(0,0,0,.08);
+}
+.progress-bar .meter { flex: 1; height: 8px; background: #e6e9ed; border-radius: 999px; overflow: hidden; }
+.progress-bar .meter i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .2s; }
+.progress-bar .count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.progress-bar .btn { width: auto; margin: 0; padding: 12px 20px; }
+
+/* --------------------------------------------------------------------- 雑多 */
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.center { text-align: center; }
+ul.list { list-style: none; margin: 0; padding: 0; }
+ul.list li { border-top: 1px solid var(--line); padding: 12px 0; }
+ul.list li:first-child { border-top: none; }
+a.plain { color: var(--primary); }
+
+.toast {
+  position: fixed; left: 50%; top: 16px; transform: translate(-50%, -160%);
+  background: #23272b; color: #fff; padding: 12px 20px; border-radius: 999px;
+  font-size: 14px; z-index: 999; transition: transform .25s; max-width: 90vw; text-align: center;
+}
+.toast.show { transform: translate(-50%, 0); }
+.toast.ok   { background: var(--ok); }
+.toast.warn { background: var(--warn); }
+.toast.err  { background: var(--danger); }
+
+.banner {
+  padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 14px;
+}
+.banner.info { background: #e7f1fb; color: #10416f; }
+.banner.warn { background: #fff4e5; color: #8a4b00; }
+.banner.err  { background: #fdecea; color: #8c1d18; }
+
+.demo-banner {
+  background: #fff4d6; color: #6b4a00; border-bottom: 1px solid #f0d58a;
+  font-size: 12.5px; text-align: center; padding: 6px 12px;
+}
+
+.readonly-note {
+  background: #eef0f3; color: var(--muted); font-size: 13px;
+  padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; text-align: center;
+}
+
+@media print {
+  .appbar, .progress-bar, .btn { display: none !important; }
+}
+
+/* =============================================================================
+ * ここから OCR版で追加した部分
+ * ========================================================================== */
+[hidden] { display: none !important; }
+
+/* 入力欄＋「読取」ボタン */
+.field-label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+div.field { margin: 14px 0; }
+.input-cam { display: flex; gap: 8px; align-items: stretch; }
+.input-cam input { flex: 1; min-width: 0; font-size: 18px; letter-spacing: .02em; }
+.cam-btn {
+  flex: none; display: flex; align-items: center; gap: 6px;
+  padding: 0 14px; min-height: 50px; border: none; border-radius: 8px;
+  background: var(--primary); color: #fff; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+}
+.cam-btn:active { background: var(--primary-d); }
+.cam-btn svg { flex: none; }
+
+/* OCRで入れた値・前回の記録から入れた値の目印 */
+input.ocr-filled  { background: #fffbe6; border-color: #e0b400; }
+input.prev-filled { background: #f2f8fe; border-color: #a9c8e8; }
+.field-note { font-size: 12.5px; margin: 6px 0 0; padding: 6px 10px; border-radius: 6px; line-height: 1.5; }
+.field-note.ocr  { background: #fff4d6; color: #6b4a00; }
+.field-note.prev { background: #e7f1fb; color: #10416f; }
+.field-note.bad  { background: #fdecea; color: #8c1d18; }
+
+.tip { background: #f2f4f7; border-radius: 8px; padding: 8px 12px; }
+.link-btn {
+  background: none; border: none; padding: 0 4px; font: inherit; font-size: 13px;
+  color: var(--primary); text-decoration: underline; cursor: pointer;
+}
+
+/* 点検記録の一覧 */
+ul.rec-list { list-style: none; margin: 0; padding: 0; }
+ul.rec-list li { border-top: 1px solid var(--line); }
+ul.rec-list li:first-child { border-top: none; }
+ul.rec-list a {
+  display: flex; align-items: center; gap: 10px; padding: 12px 2px;
+  color: var(--text); text-decoration: none;
+}
+ul.rec-list .rec-main { flex: 1; min-width: 0; }
+ul.rec-list .rec-id { font-weight: 700; font-size: 16px; }
+ul.rec-list .rec-sub { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ul.rec-list .rec-tag { flex: none; font-size: 12px; padding: 3px 9px; border-radius: 999px; background: #e8f5e9; color: #1b5e20; }
+ul.rec-list .rec-tag.ng { background: #fff3e0; color: #e65100; }
+ul.rec-list .chev { color: var(--muted); flex: none; }
+
+.seg.wide { display: grid; grid-template-columns: 1fr 1fr; }
+.seg.wide span { display: block; text-align: center; }
+
+/* -------------------------------------------------------------- OCR撮影画面 */
+body.ocr-open { overflow: hidden; }
+.ocr-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  background: #000; color: #fff;
+  padding-top: env(safe-area-inset-top);
+}
+.ocr-top { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.ocr-close {
+  width: 44px; height: 44px; flex: none; border: none; border-radius: 50%;
+  background: rgba(255,255,255,.16); color: #fff; font-size: 18px; cursor: pointer;
+}
+.ocr-title { font-size: 16px; font-weight: 600; }
+.ocr-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+
+.ocr-cam { position: absolute; inset: 0; }
+.ocr-cam video { width: 100%; height: 100%; object-fit: cover; display: block; background: #111; }
+.ocr-guide {
+  position: absolute; border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.55);
+  outline: 2px solid rgba(255,255,255,.85);
+}
+.ocr-guide i { position: absolute; width: 22px; height: 22px; border: 4px solid #ffd54f; }
+.ocr-guide i:nth-child(1) { left: -4px;  top: -4px;    border-right: none; border-bottom: none; border-top-left-radius: 10px; }
+.ocr-guide i:nth-child(2) { right: -4px; top: -4px;    border-left: none;  border-bottom: none; border-top-right-radius: 10px; }
+.ocr-guide i:nth-child(3) { left: -4px;  bottom: -4px; border-right: none; border-top: none;    border-bottom-left-radius: 10px; }
+.ocr-guide i:nth-child(4) { right: -4px; bottom: -4px; border-left: none;  border-top: none;    border-bottom-right-radius: 10px; }
+.ocr-hint {
+  position: absolute; left: 14px; right: 14px; bottom: 12px; margin: 0;
+  background: rgba(0,0,0,.6); border-radius: 10px; padding: 8px 12px;
+  font-size: 14px; text-align: center; line-height: 1.5;
+}
+.ocr-cam-msg {
+  position: absolute; left: 16px; right: 16px; top: 38%; margin: 0;
+  background: rgba(198,40,40,.92); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.6;
+}
+
+.ocr-select { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px 12px; }
+.ocr-select .ocr-hint { position: static; flex: none; }
+.ocr-photo-area { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.ocr-photo-wrap {
+  position: relative; line-height: 0; overflow: hidden;
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair;
+}
+.ocr-photo-wrap img { display: block; max-width: 100%; pointer-events: none; -webkit-user-drag: none; }
+.ocr-sel {
+  position: absolute; border: 2px solid #ffd54f; background: rgba(255,213,79,.12);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.45); pointer-events: none;
+}
+
+.ocr-result { position: absolute; inset: 0; overflow-y: auto; padding: 10px 16px 20px; background: #111; }
+.ocr-crop { display: block; width: 100%; max-height: 30vh; object-fit: contain; background: #fff; border-radius: 8px; }
+.ocr-status {
+  display: flex; align-items: center; gap: 10px; margin: 12px 0;
+  padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.1); font-size: 14px; line-height: 1.5;
+}
+.ocr-status.ok   { background: #1b5e20; }
+.ocr-status.warn { background: #8a4b00; }
+.ocr-status.err  { background: #8c1d18; }
+.ocr-spinner {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; animation: ocr-spin .8s linear infinite;
+}
+.ocr-status.ok .ocr-spinner, .ocr-status.warn .ocr-spinner, .ocr-status.err .ocr-spinner { display: none; }
+@keyframes ocr-spin { to { transform: rotate(360deg); } }
+.ocr-value-label { display: block; }
+.ocr-value-label > span { display: block; font-size: 13px; color: #cfd4da; margin-bottom: 6px; }
+.ocr-overlay input.ocr-value { font-size: 22px; font-weight: 700; letter-spacing: .03em; padding: 12px; }
+.ocr-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.ocr-chips-title { font-size: 13px; color: #cfd4da; }
+.ocr-chip {
+  min-height: 40px; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid #5b6168; background: #24272b; color: #fff; font-size: 15px; font-family: inherit;
+}
+.ocr-chip.region { border-color: #7a6a2a; }
+.ocr-raw-box { margin-top: 16px; font-size: 12px; color: #aab0b6; }
+.ocr-raw-box summary { cursor: pointer; padding: 6px 0; }
+.ocr-raw { white-space: pre-wrap; word-break: break-all; margin: 6px 0 0; font-size: 12px; }
+
+.ocr-bottom { flex: none; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); background: #000; }
+.ocr-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ocr-btn {
+  flex: 1; min-height: 50px; padding: 0 12px; border-radius: 12px; cursor: pointer;
+  border: 1px solid #50565c; background: #1c1d1f; color: #fff; font-size: 15px; font-weight: 600; font-family: inherit;
+}
+.ocr-btn.primary { flex: 1.6; background: var(--primary); border-color: var(--primary); }
+.ocr-btn:disabled { opacity: .4; cursor: default; }
+.ocr-btn.on { background: #ffd54f; border-color: #ffd54f; color: #000; }
+.ocr-spacer { flex: 1; }
+.ocr-shutter {
+  flex: none; width: 74px; height: 74px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border: 4px solid #000; background: #fff; color: var(--primary);
+  box-shadow: 0 0 0 4px #fff;
+}
+.ocr-shutter:active { transform: scale(.94); }
+.ocr-shutter svg { width: 30px; height: 30px; }
+/* 読み取り結果の欄（車検証まとめ読みでは複数並ぶ） */
+.ocr-out { margin: 14px 0 18px; }
+.ocr-out-note { margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+.ocr-out-note.ok   { background: rgba(27,94,32,.6); }
+.ocr-out-note.warn { background: rgba(138,75,0,.85); }
+.ocr-out-note.err  { background: rgba(140,29,24,.85); }
+.ocr-overlay input.ocr-value[type=date] { font-size: 18px; }
+.ocr-out .ocr-chips { margin-top: 8px; }
+
+/* 車検証からまとめて読み取るボタン */
+.btn-cert {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 56px; margin: 4px 0 6px; padding: 10px 14px;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  background: var(--primary); color: #fff; font-size: 17px; font-weight: 700; font-family: inherit;
+}
+.btn-cert:active { background: var(--primary-d); }
+.btn-cert small { display: block; font-size: 12px; font-weight: 400; opacity: .9; }
+.or-line { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; margin: 10px 0 2px; }
+.or-line::before, .or-line::after { content: ''; flex: 1; border-top: 1px solid var(--line); }

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 外部への通信・外部プログラムの読み込みを禁止（車両情報・写真を社外へ出さないため） -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#12508f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="点検OCR">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>車両法定点検（OCR版）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="appbar">
+  <h1>車両法定点検 <small style="font-weight:400;opacity:.85">OCR版</small></h1>
+  <a class="env" href="settings.html" style="color:#fff;text-decoration:none">設定</a>
+</div>
+
+<main>
+  <div class="card">
+    <h2>QRコードを読み取ってください</h2>
+    <p class="small muted">
+      車両キープレートのQRシールを枠の中に写してください。<br>
+      管理番号（例：DC4-0754）を読み取ると、自動で次の画面に進みます。
+    </p>
+    <div id="reader"></div>
+    <p class="scan-hint" id="scan-hint">カメラを起動しています…</p>
+    <button type="button" class="btn secondary" id="btn-restart" hidden>カメラを再起動する</button>
+  </div>
+
+  <div class="card">
+    <h2>QRが読めないとき</h2>
+    <label class="field">
+      <span>管理番号を直接入力（例：DC4-0754）</span>
+      <input type="text" id="manual-id" placeholder="DC4-0754" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="go">
+    </label>
+    <button type="button" class="btn secondary" id="btn-manual">この管理番号で進む</button>
+
+    <label class="field" style="margin-top:18px">
+      <span>QRコードの写真から読み取る</span>
+      <input type="file" id="qr-file" accept="image/*">
+    </label>
+  </div>
+
+  <div class="card" id="recent-card" hidden>
+    <h2>この端末の点検記録</h2>
+    <ul class="rec-list" id="recent"></ul>
+  </div>
+
+  <p class="center small muted">
+    点検記録はこのスマホの中だけに保存されます（外部には送信しません）。<br>
+    <a class="plain" href="settings.html">設定・使い方・安全性について</a>
+  </p>
+</main>
+<script src="config/app-config.js"></script>
+<script src="src/common/util.js"></script>
+<script src="src/storage/StorageAdapter.js"></script>
+<script src="src/storage/LocalStorageAdapter.js"></script>
+<script src="src/storage/storageFactory.js"></script><script src="vendor/html5-qrcode.min.js"></script>
+<script src="src/qr/scanner.js"></script>
+<script src="src/pages/common-list.js"></script>
+<script src="src/pages/index.js"></script>
+</body>
+</html>

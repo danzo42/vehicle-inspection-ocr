@@ -1,0 +1,359 @@
+{
+  "_comment": [
+    "点検項目の定義ファイル。ここを編集すればフォームとPDFの内容が変わります（プログラムの修正は不要）。",
+    "出典: 車両法定点検実施要綱 20150525改訂.xls の「３ヶ月」「６ヶ月」シート（紙の記録簿の原本）。",
+    "",
+    "構造:",
+    "  cycles.<区分>.groups[]        … 大分類（かじ取り装置 など）",
+    "  groups[].column               … PDF上の配置。left = 左列, right = 右列（紙の記録簿と同じ並び）",
+    "  groups[].units[]              … 中分類（パワーステアリング装置 など）。中分類が無い場合は name を空文字に。",
+    "  units[].items[]               … 実際にチェックする点検項目",
+    "  items[].id                    … 保存用のキー。★一度運用を始めたら変更しないこと（過去記録と対応しなくなるため）",
+    "  items[].label                 … 画面とPDFに出す文言",
+    "  cycles.<区分>.targets         … 記録簿右上の「対象車種」。1行ずつの配列で、文字列はそのまま印字、",
+    "                                  { id, text, prefixes } は○で囲める車種。管理番号の記号が prefixes に",
+    "                                  含まれる車両は、その車種が自動で選ばれる（入力画面で変更も可）",
+    "  units[].bulkNa                … true = 「まとめて該当なし」ボタンを出す（装置が付いていない車両がある中分類だけ）",
+    "  items[].optional              … true = 記録簿で下線なし・白い□の項目（走行距離が規定以下なら省略可）",
+    "                                  省略できない項目（下線付き・黄色の□）は optional を書かない",
+    "",
+    "判定の種類（judgementCodes の type）:",
+    "  good   … 良好（レ）",
+    "  action … 点検時に実施した整備（△修理 ×交換 ○分解 Ａ調整 Ｔ締付 Ｃ清掃 Ｌ給油水）",
+    "  skip   … 省略（走行距離が規定以下のとき。optional の項目だけ選べる）。記録簿では空欄",
+    "  na     … 該当なし（その装置が車両に無い。すべての項目で選べる）。記録簿では「／」"
+  ],
+
+  "judgementCodes": [
+    { "code": "OK",   "mark": "レ", "label": "良好",   "type": "good" },
+    { "code": "REP",  "mark": "△", "label": "修理",   "type": "action" },
+    { "code": "EXC",  "mark": "×", "label": "交換",   "type": "action" },
+    { "code": "DIS",  "mark": "○", "label": "分解",   "type": "action" },
+    { "code": "ADJ",  "mark": "Ａ", "label": "調整",   "type": "action" },
+    { "code": "TIG",  "mark": "Ｔ", "label": "締付",   "type": "action" },
+    { "code": "CLN",  "mark": "Ｃ", "label": "清掃",   "type": "action" },
+    { "code": "LUB",  "mark": "Ｌ", "label": "給油水", "type": "action" },
+    { "code": "SKIP", "mark": "",   "label": "省略",   "type": "skip" },
+    { "code": "NA",   "mark": "／", "label": "該当なし", "type": "na" }
+  ],
+
+  "preChecks": [
+    { "id": "shakensho",  "label": "車検証",     "type": "presence" },
+    { "id": "sankakuita", "label": "三角停止板", "type": "presence" }
+  ],
+
+  "cycles": {
+    "3month": {
+      "title": "３ヶ月定期点検整備記録簿",
+      "formTitle": "3ヶ月定期点検整備記録簿",
+      "targets": [
+        [
+          { "id": "dump",      "text": "ダンプカー",     "prefixes": ["DC2", "DC3", "DC4", "DC10", "RD", "SH4"] }, "　・　",
+          { "id": "unic",      "text": "ユニック車",     "prefixes": ["UC2", "UC3", "UC4", "UC6"] }, "　・　",
+          { "id": "truck",     "text": "トラック",       "prefixes": ["TC", "TC1", "TC2", "TC3", "TC4", "TRG", "WTR"] }, "　・　",
+          { "id": "van",       "text": "ライトバン",     "prefixes": ["VAN"] }, "　・　",
+          { "id": "sprinkler", "text": "散水車",         "prefixes": ["WS2", "WS4"] }
+        ],
+        [
+          { "id": "aerial",    "text": "高所作業車",     "prefixes": ["SL12", "SL17", "SL22", "SL255"] }, "　・　",
+          { "id": "special",   "text": "その他特種車両", "prefixes": ["VD4", "VD5", "JK", "OFC"] },
+          "　（　軽四　・　乗用車　以外　）"
+        ]
+      ],
+      "targetNote": "ダンプカー・ユニック車・トラック・ライトバン・散水車・高所作業車・その他特種車両（軽四・乗用車以外）",
+      "omitNote": "下線のない項目は、車検証交付日又は前回点検日以降の走行距離が３ヶ月当たり2,000km以下のとき点検を省略できます。ただし前回の点検で実施しなかった項目は実施が必要です。",
+      "omitNoteLines": [
+        "下線のない項目は車検証交付日又は前回点検日",
+        "以降、走行距離が3ヶ月当たり 2,000km以下の時",
+        "点検を省略できます。",
+        "但し、前回の点検ですべきところを実施しなかった",
+        "場合は実施しなければいけません。"
+      ],
+      "groups": [
+        {
+          "name": "かじ取り装置", "column": "left",
+          "units": [
+            { "name": "パワーステアリング装置", "bulkNa": true, "items": [
+              { "id": "steer_ps_belt", "label": "ベルトの緩み及び損傷" },
+              { "id": "steer_ps_oil",  "label": "油漏れ及び油量", "optional": true }
+            ]},
+            { "name": "ロッド及びアーム類", "items": [
+              { "id": "steer_rod_loose", "label": "緩み、がた及び損傷", "optional": true }
+            ]},
+            { "name": "ナックル", "items": [
+              { "id": "steer_knuckle_joint", "label": "連結部のがた", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "制動装置", "column": "left",
+          "units": [
+            { "name": "ブレーキペダル", "items": [
+              { "id": "brake_pedal_play",   "label": "遊び及び踏み込んだ時の床板との隙間" },
+              { "id": "brake_pedal_effect", "label": "ブレーキの効き具合" }
+            ]},
+            { "name": "駐車ブレーキ機構", "items": [
+              { "id": "brake_park_travel", "label": "引きしろ" },
+              { "id": "brake_park_effect", "label": "ブレーキの効き具合" }
+            ]},
+            { "name": "ホース及びパイプ", "items": [
+              { "id": "brake_hose", "label": "漏れ、損傷及び取付状態" }
+            ]},
+            { "name": "リザーバタンク", "items": [
+              { "id": "brake_reservoir", "label": "液量" }
+            ]},
+            { "name": "ブレーキ・チャンバ", "items": [
+              { "id": "brake_chamber_stroke", "label": "ロッドのストローク" }
+            ]},
+            { "name": "ブレーキドラム及びブレーキシュー", "bulkNa": true, "items": [
+              { "id": "brake_drum_gap",  "label": "ドラムとライニングとの隙間" },
+              { "id": "brake_shoe_wear", "label": "シューの摺動部分及びライニングの磨耗", "optional": true }
+            ]},
+            { "name": "センターブレーキドラム及びライニング", "bulkNa": true, "items": [
+              { "id": "brake_center_mount", "label": "ドラムの取付けの緩み" },
+              { "id": "brake_center_gap",   "label": "ドラムとライニングとの隙間" }
+            ]},
+            { "name": "ブレーキディスク及びパッド", "bulkNa": true, "items": [
+              { "id": "brake_disc_gap", "label": "ディスクとパッドの隙間", "optional": true },
+              { "id": "brake_pad_wear", "label": "パッドの磨耗", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "走行装置", "column": "left",
+          "units": [
+            { "name": "ホイール", "items": [
+              { "id": "run_wheel_nut",     "label": "ホイールナット及びホイールボルトの緩み" },
+              { "id": "run_tire",          "label": "タイヤの状態", "optional": true },
+              { "id": "run_front_bearing", "label": "フロントホイールベアリングのがた", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "緩衝装置", "column": "left",
+          "units": [
+            { "name": "リーフサスペンション", "items": [
+              { "id": "susp_leaf_spring", "label": "スプリングの損傷" }
+            ]},
+            { "name": "エアサスペンション", "bulkNa": true, "items": [
+              { "id": "susp_air_leak",    "label": "エア漏れ" },
+              { "id": "susp_air_bellows", "label": "ベローズの損傷", "optional": true },
+              { "id": "susp_air_mount",   "label": "取付部及び連結部の緩み及び損傷", "optional": true }
+            ]},
+            { "name": "ショックアブソーバ", "items": [
+              { "id": "susp_shock", "label": "油漏れ及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "動力伝達装置", "column": "right",
+          "units": [
+            { "name": "クラッチ", "bulkNa": true, "items": [
+              { "id": "drive_clutch_play",  "label": "ペダルの遊び及びきれた時の床板との隙間" },
+              { "id": "drive_clutch_work",  "label": "作用" },
+              { "id": "drive_clutch_fluid", "label": "液量" }
+            ]},
+            { "name": "トランスミッション及びトランスファ", "items": [
+              { "id": "drive_mission_oil", "label": "油漏れ及び油量", "optional": true }
+            ]},
+            { "name": "プロペラシャフト及びドライブシャフト", "items": [
+              { "id": "drive_propeller_joint", "label": "連結部の緩み", "optional": true }
+            ]},
+            { "name": "デファレンシャル", "items": [
+              { "id": "drive_diff_oil", "label": "油漏れ及び油量", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "電気装置", "column": "right",
+          "units": [
+            { "name": "点火装置", "bulkNa": true, "items": [
+              { "id": "elec_ign_timing", "label": "点火時期" },
+              { "id": "elec_ign_plug",   "label": "点火プラグの状態", "optional": true }
+            ]},
+            { "name": "バッテリ", "items": [
+              { "id": "elec_battery_terminal", "label": "ターミナル部の接続状態" }
+            ]},
+            { "name": "電気配線", "items": [
+              { "id": "elec_wiring", "label": "接続部の緩み及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "原動機", "column": "right",
+          "units": [
+            { "name": "本体", "items": [
+              { "id": "eng_body_accel",   "label": "低速及び加速の状態" },
+              { "id": "eng_body_exhaust", "label": "排気の状態" },
+              { "id": "eng_air_cleaner",  "label": "エアクリーナエレメントの状態", "optional": true }
+            ]},
+            { "name": "潤滑装置", "items": [
+              { "id": "eng_lub_leak", "label": "油漏れ" }
+            ]},
+            { "name": "燃料装置", "items": [
+              { "id": "eng_fuel_leak", "label": "燃料漏れ" }
+            ]},
+            { "name": "冷却装置", "items": [
+              { "id": "eng_cool_fanbelt", "label": "ファンベルトの緩み及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "エアコンプレッサ", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "aircomp_tank_water", "label": "エアタンクの凝水" }
+            ]}
+          ]
+        },
+        {
+          "name": "車枠及び車体", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "frame_loose", "label": "緩み及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "その他", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "other_chassis_lub", "label": "シャシ各部の給油油脂状態" }
+            ]}
+          ]
+        },
+        {
+          "name": "エキゾーストパイプ及びマフラ", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "exhaust_mount", "label": "取付けの緩み及び損傷", "optional": true }
+            ]}
+          ]
+        }
+      ]
+    },
+
+    "6month": {
+      "title": "６ヶ月定期点検整備記録簿",
+      "formTitle": "6ヶ月定期点検整備記録簿",
+      "targets": [
+        [
+          { "id": "kei_dump",  "text": "軽ダンプカー", "prefixes": ["KDC"] }, "　・　",
+          { "id": "kei_truck", "text": "軽トラック",   "prefixes": ["KTC"] }, "　・　",
+          { "id": "kei_1box",  "text": "軽1BOX",       "prefixes": ["K1BOX"] }, "　等の ",
+          { "id": "kei",       "text": "軽四輪車",     "prefixes": ["KEI"] }
+        ],
+        [
+          { "id": "sedan",     "text": "セダン",       "prefixes": [] }, "　・　",
+          { "id": "wagon",     "text": "ワゴン",       "prefixes": [] }, "　・　",
+          { "id": "box",       "text": "1BOX",         "prefixes": ["1BOX"] }, "　等の ",
+          { "id": "car",       "text": "乗用車",       "prefixes": ["CAR"] }
+        ]
+      ],
+      "targetNote": "軽ダンプカー・軽トラック・軽1BOX等の軽四輪車、セダン・ワゴン・1BOX等の乗用車",
+      "omitNote": "下線のない項目は、車検証交付日又は前回点検日以降の走行距離が６ヶ月当たり4,000km以下のとき点検を省略できます。ただし前回の点検で実施しなかった項目は実施が必要です。",
+      "omitNoteLines": [
+        "下線のない項目は車検証交付日又は前回点検日",
+        "以降、走行距離が6ヶ月当たり 4,000km以下の時",
+        "点検を省略できます。",
+        "但し、前回の点検ですべきところを実施しなかった",
+        "場合は実施しなければいけません。"
+      ],
+      "groups": [
+        {
+          "name": "かじ取り装置", "column": "left",
+          "units": [
+            { "name": "パワーステアリング装置", "bulkNa": true, "items": [
+              { "id": "steer_ps_belt", "label": "ベルトの緩み及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "制動装置", "column": "left",
+          "units": [
+            { "name": "ブレーキペダル", "items": [
+              { "id": "brake_pedal_play",   "label": "遊び及び踏み込んだ時の床板との隙間" },
+              { "id": "brake_pedal_effect", "label": "ブレーキの効き具合" }
+            ]},
+            { "name": "駐車ブレーキ機構", "items": [
+              { "id": "brake_park_travel", "label": "引きしろ" },
+              { "id": "brake_park_effect", "label": "ブレーキの効き具合" }
+            ]},
+            { "name": "ホース及びパイプ", "items": [
+              { "id": "brake_hose", "label": "漏れ、損傷及び取付状態" }
+            ]},
+            { "name": "ブレーキドラム及びブレーキシュー", "bulkNa": true, "items": [
+              { "id": "brake_drum_gap", "label": "ドラムとライニングとの隙間" }
+            ]}
+          ]
+        },
+        {
+          "name": "走行装置", "column": "left",
+          "units": [
+            { "name": "ホイール", "items": [
+              { "id": "run_wheel_nut", "label": "ホイールナット及びホイールボルトの緩み" }
+            ]}
+          ]
+        },
+        {
+          "name": "動力伝達装置", "column": "left",
+          "units": [
+            { "name": "クラッチ", "bulkNa": true, "items": [
+              { "id": "drive_clutch_play", "label": "ペダルの遊び及びきれた時の床板との隙間" },
+              { "id": "drive_clutch_work", "label": "作用" }
+            ]},
+            { "name": "トランスミッション及びトランスファ", "items": [
+              { "id": "drive_mission_oil", "label": "油漏れ及び油量", "optional": true }
+            ]},
+            { "name": "プロペラシャフト及びドライブシャフト", "items": [
+              { "id": "drive_propeller_joint", "label": "連結部の緩み", "optional": true }
+            ]},
+            { "name": "デファレンシャル", "items": [
+              { "id": "drive_diff_oil", "label": "油漏れ及び油量", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "電気装置", "column": "right",
+          "units": [
+            { "name": "点火装置", "bulkNa": true, "items": [
+              { "id": "elec_ign_timing", "label": "点火時期" },
+              { "id": "elec_ign_plug",   "label": "点火プラグの状態", "optional": true }
+            ]}
+          ]
+        },
+        {
+          "name": "原動機", "column": "right",
+          "units": [
+            { "name": "本体", "items": [
+              { "id": "eng_body_exhaust", "label": "排気の状態" },
+              { "id": "eng_air_cleaner",  "label": "エアクリーナエレメントの状態", "optional": true }
+            ]},
+            { "name": "潤滑装置", "items": [
+              { "id": "eng_lub_leak", "label": "油漏れ" }
+            ]},
+            { "name": "冷却装置", "items": [
+              { "id": "eng_cool_fanbelt", "label": "ファンベルトの緩み及び損傷" }
+            ]}
+          ]
+        },
+        {
+          "name": "エアコンプレッサ", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "aircomp_tank_water", "label": "エアタンクの凝水" }
+            ]}
+          ]
+        },
+        {
+          "name": "その他", "column": "right",
+          "units": [
+            { "name": "", "items": [
+              { "id": "other_chassis_lub", "label": "シャシ各部の給油油脂状態" }
+            ]}
+          ]
+        }
+      ]
+    }
+  }
+}
