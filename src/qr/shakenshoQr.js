@@ -17,11 +17,16 @@
   const VIS = global.VIS = global.VIS || {};
   const sjis = new TextDecoder('shift_jis');
 
-  /** jsQR の結果を、分割QRの情報と生のバイト列にまとめる */
+  /**
+   * jsQR の結果を、分割QRの情報と生のバイト列にまとめる。
+   * QRの中身は「数字」「英数字」「バイト」「漢字」の書き方が混ざっていることがある
+   * （車検証では、全角の登録番号は漢字、車台番号は英数字で入っていることがある）。
+   * 区切りごとの情報（chunks）は数字・英数字の部分にバイト列を持たないため、
+   * すべての部分が順番どおりに入っている binaryData を使う。
+   */
   function toSymbol(r) {
     const sa = r.chunks.find(c => c.type === 'structuredappend');
-    const bytes = [];
-    r.chunks.forEach(c => { if (c.bytes) bytes.push(...c.bytes); });
+    const bytes = Array.from(r.binaryData || []);
     return {
       seq: sa ? sa.currentSequence : null,
       total: sa ? sa.totalSequence + 1 : null,
@@ -89,7 +94,7 @@
   /** 二次元コード2の中身 → 登録番号・車台番号 */
   function parseCode2(text) {
     const p = text.split('/');
-    if (p.length < 5 || !p[1] || p[1].length !== 12) return null;
+    if (p.length < 4 || !p[1] || p[1].length !== 12) return null;
     const f = p[1];
     // 全角→半角、全角空白（桁合わせ）を取り除く
     const z = s => s.normalize('NFKC').replace(/\s/g, '');

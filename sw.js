@@ -9,7 +9,7 @@
  * ========================================================================== */
 
 const CACHE_PREFIX  = 'vis-ocr-';
-const CACHE_VERSION = CACHE_PREFIX + 'v2';
+const CACHE_VERSION = CACHE_PREFIX + 'v3';
 
 /** オフラインでも必ず動くよう、先に取っておくファイル */
 const PRECACHE = [
@@ -32,6 +32,10 @@ const PRECACHE = [
   'src/storage/LocalStorageAdapter.js',
   'src/storage/storageFactory.js',
   'src/qr/scanner.js',
+  'src/qr/shakenshoQr.js',
+  'src/pages/qr-check.js',
+  'qr-check.html',
+  'vendor/jsQR.js',
   'src/form/formRenderer.js',
   'src/pdf/pdfGenerator.js',
   'src/ocr/ocrParser.js',

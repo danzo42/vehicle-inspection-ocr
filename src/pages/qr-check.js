@@ -124,6 +124,13 @@
     set('#r-expiry', r.shakenExpiry ? r.shakenExpiry : (r.model !== undefined ? '（券面のQRには入っていません）' : ''));
     set('#r-first', r.firstRegistration);
     $('#raw').textContent = groups.map(g => `[${g.have}/${g.total}] ${g.complete ? g.text : '（そろっていません）'}`).join('\n');
+    // 報告用：番号そのものは出さず、項目ごとの「全角/半角」と文字数だけを表示する
+    $('#shape').textContent = groups.filter(g => g.complete).map(g =>
+      `QR${g.total}個組：` + g.text.split('/').map((f, i) => {
+        const wide = Array.from(f).filter(ch => ch.charCodeAt(0) > 0x7F).length;
+        const kind = !f.length ? '空' : wide === f.length ? `全角${f.length}` : wide ? `混在${f.length}` : `半角${f.length}`;
+        return `${'①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'[i] || '(' + (i + 1) + ')'}${kind}`;
+      }).join(' ')).join('\n') || '（まだそろっていません）';
 
     if (r.plateNumber && r.chassisNo && !doneAt) {
       doneAt = performance.now();
@@ -141,7 +148,7 @@
     startedAt = doneAt = 0;
     $('#progress').innerHTML = '<p class="small muted" style="margin:0">まだQRを読めていません</p>';
     ['#r-plate', '#r-chassis', '#r-model', '#r-engine', '#r-expiry', '#r-first'].forEach(id => { $(id).textContent = '―'; });
-    $('#raw').textContent = ''; $('#elapsed').textContent = '';
+    $('#raw').textContent = ''; $('#shape').textContent = '（まだそろっていません）'; $('#elapsed').textContent = '';
     $('#cam-msg').textContent = 'QRを探しています…';
   });
 
