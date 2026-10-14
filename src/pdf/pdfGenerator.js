@@ -173,6 +173,12 @@
         return pos;
       },
 
+      /** 文字の幅（mm）を測る */
+      measure(str, sizePt, bold) {
+        setFont(sizePt, bold);
+        return ctx.measureText(String(str == null ? '' : str)).width / MM;
+      },
+
       /** 指定幅で折り返した行の配列を返す（日本語は1文字単位で折り返す） */
       wrap(str, widthMm, sizePt) {
         setFont(sizePt, false);
@@ -439,14 +445,29 @@
     const codes = def.judgementCodes.filter(c => c.type !== 'skip');
     const half = Math.floor(codes.length / 2);   // 左に4つ（レ△×○）、右に残り（ＡＴＣＬ／）
     const h = 5;
+    const MARK_W = 4.8;   // 記号の欄の幅（区切り線の位置）
+    const GAP = 1.2;      // 区切り線と文字のすき間
+    const PAD = 1.8;      // 文字と右の枠線のすき間
     [[codes.slice(0, half), COL_LEFT], [codes.slice(half), COL_RIGHT]].forEach(([list, col]) => {
-      const w = (col.x1 - col.x0) / list.length;
+      const colW = col.x1 - col.x0;
+      // 欄の幅は同じではなく、文字の長さに合わせて配分する
+      // （「該当なし」のように長い文字が、記号や区切り線に重ならないように）
+      let size = 9.5;
+      const need = () => list.map(c => MARK_W + GAP + p.measure(c.label, size) + PAD);
+      let widths = need();
+      while (widths.reduce((a, b) => a + b, 0) > colW && size > 7) {
+        size -= 0.25;                     // どうしても収まらない端末のフォントでは文字を少し小さく
+        widths = need();
+      }
+      const extra = (colW - widths.reduce((a, b) => a + b, 0)) / list.length;
+      let x = col.x0;
       list.forEach((c, i) => {
-        const x = col.x0 + i * w;
+        const w = widths[i] + extra;
         p.rect(x, y, w, h, 0.25);
-        p.text(c.mark, x + 2.4, y + h / 2, { size: 9.5, align: 'center' });
-        p.line(x + 4.8, y, x + 4.8, y + h, 0.2);
-        p.text(c.label, x + w - 1.8, y + h / 2, { size: 9.5, align: 'right' });
+        p.text(c.mark, x + MARK_W / 2, y + h / 2, { size: 9.5, align: 'center' });
+        p.line(x + MARK_W, y, x + MARK_W, y + h, 0.2);
+        p.text(c.label, x + w - PAD, y + h / 2, { size, align: 'right' });
+        x += w;
       });
     });
     return y + h;
