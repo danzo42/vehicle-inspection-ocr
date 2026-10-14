@@ -2,9 +2,10 @@
  * inspect.js  ―― 点検入力画面
  * -----------------------------------------------------------------------------
  *   1) QRで読んだ管理番号（?id=DC4-0754）を「YDEC№」にする
- *   2) 自動車登録番号・車台番号をカメラ（OCR）で読み取って入力する
- *      ・「車検証を撮って読み取る」… 車検証1枚から両方まとめて（紙の車検証なら車検満了日も）
- *      ・各欄の「読取」………………… 1項目ずつ（車検証の欄・ナンバープレート・車体の打刻）
+ *   2) 自動車登録番号・車台番号・車検満了日をカメラで読み取って入力する
+ *      ・「車検証のQRで読み取る」…… 車検証の二次元コードから（いちばん確実）
+ *      ・「車検証の文字から読み取る」… QRが読めないとき、文字認識（OCR）で
+ *      ・各欄の「読取」………………… 1項目ずつOCR（車検証の欄・ナンバープレート・車体の打刻）
  *      ※この端末で前に点検した車両なら、前回の値を先に入れておく
  *   3) 点検項目は02と同じ定義（data/inspection-items.json）から自動生成
  *   4) 完了すると02と同じ書式の記録簿PDF（A4一枚）を作り、この端末に保存
@@ -31,7 +32,7 @@
   const draft    = util.loadDraft(id);
   const form     = $('#form');
 
-  /** 登録番号・車台番号をどこから入れたか（記録に残す）: ocr / ocr-edited / previous / manual */
+  /** 登録番号・車台番号をどこから入れたか（記録に残す）: qr / qr-edited / ocr / ocr-edited / previous / manual */
   const sources = { plateNumber: 'manual', chassisNo: 'manual' };
   let cycle = (previous && previous.inspectionCycle) || (info && info.cycle) || VIS.config.defaultCycle;
   let itemsBox = null;
@@ -103,19 +104,26 @@
 
   /**
    * 登録番号・車台番号の欄に値を入れ、どこから入れたかの目印を付ける。
-   * kind: 'ocr' | 'ocr-edited' | 'previous' | 'manual'
+   * kind: 'qr' | 'qr-edited' | 'ocr' | 'ocr-edited' | 'previous' | 'manual'
    */
   function markField(name, value, kind) {
     const input = document.getElementById(name);
     const note  = document.getElementById(name + '-note');
     if (value != null) input.value = value;
     sources[name] = kind;
+    input.classList.toggle('qr-filled',   kind === 'qr' || kind === 'qr-edited');
     input.classList.toggle('ocr-filled',  kind === 'ocr' || kind === 'ocr-edited');
     input.classList.toggle('prev-filled', kind === 'previous' && !!input.value);
     note.className = 'field-note';
     note.hidden = true;
     if (!input.value) return;
-    if (kind === 'ocr' || kind === 'ocr-edited') {
+    if (kind === 'qr' || kind === 'qr-edited') {
+      note.hidden = false;
+      note.classList.add('qr');
+      note.textContent = kind === 'qr'
+        ? '車検証のQRから読み取りました。'
+        : '車検証のQRから読み取り、その場で修正した値です。実物と見比べて確認してください。';
+    } else if (kind === 'ocr' || kind === 'ocr-edited') {
       note.hidden = false;
       note.classList.add('ocr');
       note.textContent = 'カメラで読み取った値です。実物と1文字ずつ見比べて確認してください。';
@@ -146,23 +154,39 @@
   // ------------------------------------------------------------ OCRの読み取り
   document.querySelectorAll('[data-ocr]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const r = await VIS.ocrCapture.open(btn.dataset.ocr);   // 'cert' | 'plate' | 'chassis'
+      let r = await VIS.ocrCapture.open(btn.dataset.ocr);   // 'certqr' | 'cert' | 'plate' | 'chassis'
+      // QRの画面で「文字で読む」を選んだときは、OCRの画面を開き直す
+      if (r && r.switchTo) r = await VIS.ocrCapture.open(r.switchTo);
       if (!r) return;
+      const kind = r.source === 'qr' ? 'qr' : 'ocr';
       const filled = [];
       ['plateNumber', 'chassisNo'].forEach(name => {
         if (!r.values[name]) return;
-        // 読み取り結果をその場で直してから入れた場合は ocr-edited として残す
-        markField(name, r.values[name], r.edited[name] ? 'ocr-edited' : 'ocr');
+        // 読み取り結果をその場で直してから入れた場合は ○○-edited として残す
+        markField(name, r.values[name], r.edited[name] ? kind + '-edited' : kind);
         checkFormat(name);
         filled.push(name === 'plateNumber' ? '登録番号' : '車台番号');
       });
       if (r.values.shakenExpiry) {
-        $('#shakenExpiry').value = r.values.shakenExpiry;
+        const ex = $('#shakenExpiry');
+        ex.value = r.values.shakenExpiry;
+        ex.classList.remove('qr-filled', 'ocr-filled');
+        ex.classList.add(kind === 'qr' ? 'qr-filled' : 'ocr-filled');
+        sources.shakenExpiry = r.edited.shakenExpiry ? kind + '-edited' : kind;
         filled.push('車検満了日');
       }
-      if (filled.length) util.toast(`${filled.join('・')}を入力しました。実物と見比べて確認してください`, 'ok');
+      if (filled.length) {
+        util.toast(`${filled.join('・')}を入力しました。` +
+          (kind === 'qr' ? '' : '実物と見比べて確認してください'), 'ok');
+      }
       saveDraftSoon();
     });
+  });
+
+  // 車検満了日を手で直したら目印を外す
+  $('#shakenExpiry').addEventListener('input', () => {
+    $('#shakenExpiry').classList.remove('qr-filled', 'ocr-filled');
+    if (sources.shakenExpiry) sources.shakenExpiry = 'manual';
   });
 
   ['plateNumber', 'chassisNo'].forEach(name => {
@@ -170,7 +194,8 @@
     input.addEventListener('input', () => {
       // 手で書き換えたら目印を外す（OCRの値を直した場合は ocr-edited）
       const was = sources[name];
-      const kind = (was === 'ocr' || was === 'ocr-edited') ? 'ocr-edited' : 'manual';
+      const kind = (was === 'qr' || was === 'qr-edited') ? 'qr-edited'
+                 : (was === 'ocr' || was === 'ocr-edited') ? 'ocr-edited' : 'manual';
       sources[name] = kind;
       input.classList.remove('prev-filled');
     });
@@ -246,6 +271,7 @@
       });
     });
     ['plateNumber', 'chassisNo'].forEach(n => markField(n, null, (d.sources && d.sources[n]) || 'manual'));
+    if (d.sources && d.sources.shakenExpiry) sources.shakenExpiry = d.sources.shakenExpiry;
     VIS.form.updateProgress(itemsBox);
     $('#draft-text').textContent = `途中まで入力した内容（${util.formatDateTime(d.savedAt)}）を復元しました。`;
     $('#draft-banner').hidden = false;
@@ -335,7 +361,7 @@
         vehicleType:      vehicleType,
         plateNumber:      plate,
         chassisNo:        chassis,
-        inputSources:     { plateNumber: sources.plateNumber, chassisNo: sources.chassisNo },
+        inputSources:     { plateNumber: sources.plateNumber, chassisNo: sources.chassisNo, shakenExpiry: sources.shakenExpiry || '' },
         inspectionCycle:  cycle,
         inspectedAt:      now,
         createdAt:        now,

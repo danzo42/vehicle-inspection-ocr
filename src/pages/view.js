@@ -40,7 +40,8 @@
   const isOk = s.overall === '良好';
   const src = record.inputSources || {};
   const srcLabel = k => ({
-    'ocr': 'カメラで読み取り', 'ocr-edited': 'カメラで読み取り後に修正',
+    'qr': '車検証のQRから', 'qr-edited': '車検証のQRから読み取り後に修正',
+    'ocr': 'カメラで読み取り（文字認識）', 'ocr-edited': 'カメラで読み取り後に修正',
     'previous': '前回の記録から', 'manual': '手入力'
   }[k] || '');
   const km = v => (v != null && v !== '') ? `${Number(v).toLocaleString('ja-JP')} km` : '―';

@@ -441,3 +441,16 @@ body.ocr-open { overflow: hidden; }
 .btn-cert small { display: block; font-size: 12px; font-weight: 400; opacity: .9; }
 .or-line { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; margin: 10px 0 2px; }
 .or-line::before, .or-line::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
+/* 車検証のQRで読み取る（QRから入れた値の目印・撮影画面の状況表示） */
+input.qr-filled { background: #eef8f0; border-color: #86c596; }
+.field-note.qr  { background: #e8f5e9; color: #1b5e20; }
+.btn-cert-sub {
+  display: block; width: 100%; min-height: 44px; margin: 4px 0 2px; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer;
+  color: var(--primary); font-size: 14px; font-weight: 600; font-family: inherit;
+}
+.ocr-qr-status {
+  position: absolute; left: 12px; right: 12px; top: 10px; z-index: 2;
+  padding: 8px 12px; border-radius: 10px; background: rgba(0,0,0,.65); color: #fff;
+  font-size: 14px; line-height: 1.6; text-align: center; white-space: pre-line;
+}
