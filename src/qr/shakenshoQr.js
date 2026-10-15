@@ -67,7 +67,7 @@
         const L = r.location;
         sizes.push(Math.hypot(L.topRightCorner.x - L.topLeftCorner.x, L.topRightCorner.y - L.topLeftCorner.y));
         const s = toSymbol(r);
-        const key = (s.parity !== null ? `${s.parity}-${s.seq}` : '') + ':' + s.bytes.join(',');
+        const key = (s.parity !== null ? `${s.parity}-${s.total}-${s.seq}` : '') + ':' + s.bytes.join(',');
         if (seen.has(key)) return;
         seen.add(key);
         found.push(s);
@@ -135,7 +135,9 @@
 
     /** @returns {boolean} 新しいQRだったら true */
     add(sym) {
-      const key = sym.parity !== null ? `${sym.parity}-${sym.seq}` : 'single-' + sym.bytes.join(',');
+      // 組の見分けは「パリティ＋何個で1組か」。パリティは1バイトなので、2つ並び・3つ並びで
+      // 偶然同じ値になることがある（約256台に1台）。個数も見ないと2つの組が混ざってしまう
+      const key = sym.parity !== null ? `${sym.parity}-${sym.total}-${sym.seq}` : 'single-' + sym.bytes.join(',');
       if (this.symbols.has(key)) return false;
       this.symbols.set(key, sym);
       return true;
@@ -145,7 +147,7 @@
     groups() {
       const g = new Map();
       this.symbols.forEach(s => {
-        const key = s.parity !== null ? 'p' + s.parity : 'single-' + g.size;
+        const key = s.parity !== null ? `p${s.parity}-${s.total}` : 'single-' + g.size;
         if (!g.has(key)) g.set(key, []);
         g.get(key).push(s);
       });

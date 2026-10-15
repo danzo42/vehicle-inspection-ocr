@@ -17,7 +17,7 @@ window.VIS.config = {
   appName: '車両法定点検（OCR版）',
 
   /** アプリの版。記録に残します（どの版で作った記録か後で分かるように） */
-  appVersion: '1.0.0-ocr',
+  appVersion: '1.1.0-ocr',
 
   /** 会社情報（点検記録PDFの左上に入るロゴ。紙の記録簿と同じもの） */
   company: {

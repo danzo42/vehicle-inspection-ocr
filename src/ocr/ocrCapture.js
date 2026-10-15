@@ -341,7 +341,10 @@
         let msg = `登録番号・車台番号 ${dots(c2, 2)}　満了日 ${dots(c3, 3)}`;
         const code2Done = !!(st.code2 && st.code2.complete);
         const code3Done = !!(st.code3 && st.code3.complete);
+        // 読めたのに中身の形が想定と違うQR（古い形式の車検証など）があるか
+        const unknown = collector.groups().some(g => g.complete && !g.parsed);
         if (code2Done && !code3Done) msg += wantCode3 ? '\n3つ並びのQRを枠に入れてください' : '\n満了日のQR（3つ並び）を探しています…';
+        else if (!code2Done && unknown) msg += '\nQRの形式が想定と違います。下の「文字で読む」をお使いください';
         else if (!code2Done && c3 && !c2) msg += '\n2つ並びのQRも枠に入れてください';
         $('.ocr-qr-status').textContent = msg;
 
@@ -422,8 +425,9 @@
           if (mode.qr) {
             stopCamera();
             if (readQrFromPhoto(photo)) return;
-            $('.ocr-select-hint').innerHTML =
-              'この写真からはQRを見つけられませんでした。QRに近づいて撮り直すか、「全体を読む」で<b>文字（OCR）から</b>読み取れます';
+            $('.ocr-select-hint').innerHTML = collector.count
+              ? 'QRは見つかりましたが、登録番号・車台番号のQR（2つ並び）がそろいませんでした。QRに近づいて撮り直すか、「全体を読む」で<b>文字（OCR）から</b>読み取れます'
+              : 'この写真からはQRを見つけられませんでした。QRに近づいて撮り直すか、「全体を読む」で<b>文字（OCR）から</b>読み取れます';
           }
 
           sel = null;

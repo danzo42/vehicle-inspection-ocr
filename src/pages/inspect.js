@@ -32,8 +32,8 @@
   const draft    = util.loadDraft(id);
   const form     = $('#form');
 
-  /** 登録番号・車台番号をどこから入れたか（記録に残す）: qr / qr-edited / ocr / ocr-edited / previous / manual */
-  const sources = { plateNumber: 'manual', chassisNo: 'manual' };
+  /** 登録番号・車台番号・車検満了日をどこから入れたか（記録に残す）: qr / qr-edited / ocr / ocr-edited / previous / manual */
+  const sources = { plateNumber: 'manual', chassisNo: 'manual', shakenExpiry: '' };
   let cycle = (previous && previous.inspectionCycle) || (info && info.cycle) || VIS.config.defaultCycle;
   let itemsBox = null;
   let submitted = false;
@@ -54,7 +54,7 @@
     markField('chassisNo',   previous.chassisNo   || '', 'previous');
     $('#previousInspectionDate').value = String(previous.inspectedAt || '').slice(0, 10);
     if (previous.odometer != null)       $('#previousOdometer').value = previous.odometer;
-    if (previous.shakenExpiry)           $('#shakenExpiry').value     = previous.shakenExpiry;
+    if (previous.shakenExpiry)         { $('#shakenExpiry').value     = previous.shakenExpiry; sources.shakenExpiry = 'previous'; }
     if (previous.shakenOdometer != null) $('#shakenOdometer').value   = previous.shakenOdometer;
     $('#prefill-note').textContent =
       `この端末の前回の記録（${util.formatDateTime(previous.inspectedAt)}）から一部を入力しました。点検日時は保存時に自動で記録されます。`;
@@ -186,7 +186,7 @@
   // 車検満了日を手で直したら目印を外す
   $('#shakenExpiry').addEventListener('input', () => {
     $('#shakenExpiry').classList.remove('qr-filled', 'ocr-filled');
-    if (sources.shakenExpiry) sources.shakenExpiry = 'manual';
+    sources.shakenExpiry = $('#shakenExpiry').value ? 'manual' : '';
   });
 
   ['plateNumber', 'chassisNo'].forEach(name => {
@@ -271,7 +271,11 @@
       });
     });
     ['plateNumber', 'chassisNo'].forEach(n => markField(n, null, (d.sources && d.sources[n]) || 'manual'));
-    if (d.sources && d.sources.shakenExpiry) sources.shakenExpiry = d.sources.shakenExpiry;
+    if (d.sources && d.sources.shakenExpiry !== undefined) sources.shakenExpiry = d.sources.shakenExpiry;
+    // 下書きの満了日がQR・OCRから入れたものなら、目印も戻す
+    const ex = $('#shakenExpiry');
+    ex.classList.toggle('qr-filled',  /^qr/.test(sources.shakenExpiry || '') && !!ex.value);
+    ex.classList.toggle('ocr-filled', /^ocr/.test(sources.shakenExpiry || '') && !!ex.value);
     VIS.form.updateProgress(itemsBox);
     $('#draft-text').textContent = `途中まで入力した内容（${util.formatDateTime(d.savedAt)}）を復元しました。`;
     $('#draft-banner').hidden = false;
@@ -361,7 +365,8 @@
         vehicleType:      vehicleType,
         plateNumber:      plate,
         chassisNo:        chassis,
-        inputSources:     { plateNumber: sources.plateNumber, chassisNo: sources.chassisNo, shakenExpiry: sources.shakenExpiry || '' },
+        inputSources:     { plateNumber: sources.plateNumber, chassisNo: sources.chassisNo,
+                            shakenExpiry: $('#shakenExpiry').value ? (sources.shakenExpiry || 'manual') : '' },
         inspectionCycle:  cycle,
         inspectedAt:      now,
         createdAt:        now,
