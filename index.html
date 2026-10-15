@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="点検OCR">
 <meta name="format-detection" content="telephone=no">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <title>車両法定点検（OCR版）</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="css/style.css">
@@ -24,6 +24,8 @@
 </div>
 
 <main>
+  <div class="card install-card" id="install-card" hidden></div>
+
   <div class="card">
     <h2>QRコードを読み取ってください</h2>
     <p class="small muted">
@@ -65,6 +67,7 @@
 <script src="src/storage/LocalStorageAdapter.js"></script>
 <script src="src/storage/storageFactory.js"></script><script src="vendor/html5-qrcode.min.js"></script>
 <script src="src/qr/scanner.js"></script>
+<script src="src/common/install.js"></script>
 <script src="src/pages/common-list.js"></script>
 <script src="src/pages/index.js"></script>
 </body>

@@ -6,6 +6,8 @@
  * ========================================================================== */
 (async function () {
   const VIS = window.VIS, util = VIS.util, $ = util.$;
+  // アプリとしてインストールの案内（アプリとして開いているときは出ない）
+  VIS.install.render($('#install-card'), { dismissible: true });
   await VIS.ready();
 
   // この端末の点検記録（新しい順に10件）

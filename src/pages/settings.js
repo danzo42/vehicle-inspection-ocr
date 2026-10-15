@@ -6,6 +6,7 @@
  * ========================================================================== */
 (async function () {
   const VIS = window.VIS, util = VIS.util, $ = util.$;
+  VIS.install.render($('#install-card'), { showInstalled: true });
   await VIS.ready();
   $('#ver').textContent = 'v' + VIS.config.appVersion;
 

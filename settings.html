@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="点検OCR">
 <meta name="format-detection" content="telephone=no">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <title>設定 - 車両法定点検（OCR版）</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="css/style.css">
@@ -25,6 +25,8 @@
 </div>
 
 <main>
+  <section class="card install-card" id="install-card" hidden></section>
+
   <section class="card">
     <h2>いつも使う入力値</h2>
     <p class="small muted">点検入力の画面に最初から入れておく値です（点検を保存すると自動で更新されます）。</p>
@@ -104,6 +106,7 @@
 <script src="src/storage/storageFactory.js"></script><script src="src/ocr/ocrParser.js"></script>
 <script src="vendor/tesseract/tesseract.min.js"></script>
 <script src="src/ocr/ocrEngine.js"></script>
+<script src="src/common/install.js"></script>
 <script src="src/pages/settings.js"></script>
 </body>
 </html>

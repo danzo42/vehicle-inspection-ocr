@@ -9,7 +9,7 @@
  * ========================================================================== */
 
 const CACHE_PREFIX  = 'vis-ocr-';
-const CACHE_VERSION = CACHE_PREFIX + 'v6';
+const CACHE_VERSION = CACHE_PREFIX + 'v7';
 
 /** オフラインでも必ず動くよう、先に取っておくファイル */
 const PRECACHE = [
@@ -27,6 +27,9 @@ const PRECACHE = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
+  'icons/icon-maskable-512.png',
+  'icons/favicon-32.png',
+  'src/common/install.js',
   'src/common/util.js',
   'src/storage/StorageAdapter.js',
   'src/storage/LocalStorageAdapter.js',
