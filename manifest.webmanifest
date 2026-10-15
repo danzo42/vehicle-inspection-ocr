@@ -1,7 +1,7 @@
 {
   "id": "./index.html",
   "name": "車両法定点検（OCR版）",
-  "short_name": "点検OCR",
+  "short_name": "法定点検",
   "description": "QRで管理番号、車検証のQRとカメラで登録番号・車台番号・車検満了日を読み取り、法定点検の記録簿を作るアプリ",
   "start_url": "./index.html",
   "scope": "./",

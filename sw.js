@@ -9,7 +9,7 @@
  * ========================================================================== */
 
 const CACHE_PREFIX  = 'vis-ocr-';
-const CACHE_VERSION = CACHE_PREFIX + 'v7';
+const CACHE_VERSION = CACHE_PREFIX + 'v8';
 
 /** オフラインでも必ず動くよう、先に取っておくファイル */
 const PRECACHE = [
