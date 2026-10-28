@@ -107,7 +107,12 @@
   function render() {
     const groups = collector.groups();
     $('#progress').innerHTML = groups.map(g => {
-      const name = g.parsed && g.parsed.kind === 'code2' ? '二次元コード2（登録番号・車台番号）'
+      const pk = g.parsed || {};
+      const name = pk.kind === 'personal' ? '軽自動車 コード4・5（使用者の氏名・住所のため中身は表示しません）'
+                 : pk.kei && pk.kind === 'code2' ? `軽自動車 コード${pk.keiCode}（車両番号・車台番号）`
+                 : pk.kei && pk.kind === 'code3' ? '軽自動車 コード3（型式・満了日など）'
+                 : pk.kei ? '軽自動車 その他のコード（このアプリでは使いません）'
+                 : g.parsed && g.parsed.kind === 'code2' ? '二次元コード2（登録番号・車台番号）'
                  : g.parsed && g.parsed.kind === 'code3' ? '二次元コード3（型式・満了日など）'
                  : g.total === 2 ? '二次元コード2？（登録番号・車台番号）'
                  : g.total === 3 ? '二次元コード3？（型式・満了日など）' : `QR（${g.total}分割）`;
@@ -123,9 +128,10 @@
     set('#r-engine', r.engineModel);
     set('#r-expiry', r.shakenExpiry ? r.shakenExpiry : (r.model !== undefined ? '（券面のQRには入っていません）' : ''));
     set('#r-first', r.firstRegistration);
-    $('#raw').textContent = groups.map(g => `[${g.have}/${g.total}] ${g.complete ? g.text : '（そろっていません）'}`).join('\n');
+    const isPersonal = g => !!(g.parsed && g.parsed.kind === 'personal');
+    $('#raw').textContent = groups.map(g => `[${g.have}/${g.total}] ${!g.complete ? '（そろっていません）' : isPersonal(g) ? '（使用者の情報のため表示しません）' : g.text}`).join('\n');
     // 報告用：番号そのものは出さず、項目ごとの「全角/半角」と文字数だけを表示する
-    $('#shape').textContent = groups.filter(g => g.complete).map(g =>
+    $('#shape').textContent = groups.filter(g => g.complete && !isPersonal(g)).map(g =>
       `QR${g.total}個組：` + g.text.split('/').map((f, i) => {
         const wide = Array.from(f).filter(ch => ch.charCodeAt(0) > 0x7F).length;
         const kind = !f.length ? '空' : wide === f.length ? `全角${f.length}` : wide ? `混在${f.length}` : `半角${f.length}`;

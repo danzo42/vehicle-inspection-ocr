@@ -9,6 +9,10 @@
  *
  * ※ 電子車検証の券面のQRでは、有効期間の満了する日は "999999"（空）固定です。
  *    「自動車検査証記録事項」（A4の紙）のQRには満了日が入っています。
+ *
+ * 軽自動車は形が違います（軽自動車検査協会の仕様。下の parseKei）。
+ *   QRは分割なしで1つずつ。紙の車検証・記録事項は6個（コード1〜6）、電子車検証は2個（コード2・3）。
+ *   コード4・5は使用者の氏名・住所なので、読んでも中身は使わず、表示も保存もしません。
  * ========================================================================== */
 
 (function (global) {
@@ -75,10 +79,12 @@
     };
 
     // ① 大きさの違う区画で探す
+    //    区画は3分の1ずつずらす（半分ずつだと、区画の半分より大きいQRがどの区画にも収まらないことがある。
+    //    軽自動車のQRは1つずつ並んでいて小さいため、特に起きやすい）
     fracs.forEach(frac => {
       const tw = Math.max(40, Math.round(W * frac));
       const th = frac >= 1 ? H : Math.min(H, Math.round(tw * 1.3));
-      scan(tw, th);
+      scan(tw, th, tw / 3, th / 3);
     });
 
     // ② 1つでも見つかったら、そのQRの大きさに合わせた細かい区画で探し直す
@@ -91,16 +97,30 @@
     findAll.lastSize = qs || findAll.lastSize || 0;
     return found;
   }
+  // 全角→半角、全角空白（桁合わせ）を取り除く
+  const z = s => s.normalize('NFKC').replace(/\s/g, '');
+
+  /**
+   * 全角12文字の登録番号・車両番号 → 「金沢400わ1234」
+   *   標板文字(4)＋分類番号(3)＋かな(1)＋一連番号(4) の順。
+   *   軽自動車の小板（昔の小さいナンバー）だけは 分類番号(3)＋標板文字(4)＋かな(1)＋一連番号(4) の順
+   *   （地名が数字で始まることはないので、先頭が数字なら小板）。
+   */
+  function plateOf(f) {
+    if (!f || f.length !== 12) return '';
+    const small = /^[0-9０-９]/.test(f);
+    const region = small ? f.slice(3, 7) : f.slice(0, 4);
+    const cls    = small ? f.slice(0, 3) : f.slice(4, 7);
+    return z(region) + z(cls) + f.slice(7, 8) + z(f.slice(8, 12));
+  }
+
   /** 二次元コード2の中身 → 登録番号・車台番号 */
   function parseCode2(text) {
     const p = text.split('/');
     if (p.length < 4 || !p[1] || p[1].length !== 12) return null;
-    const f = p[1];
-    // 全角→半角、全角空白（桁合わせ）を取り除く
-    const z = s => s.normalize('NFKC').replace(/\s/g, '');
     return {
       kind: 'code2',
-      plateNumber: z(f.slice(0, 4)) + z(f.slice(4, 7)) + f.slice(7, 8) + z(f.slice(8, 12)),
+      plateNumber: plateOf(p[1]),
       chassisNo: (p[3] || '').trim(),
       engineModel: (p[4] || '').trim()
     };
@@ -127,6 +147,52 @@
   }
 
   /**
+   * 軽自動車の二次元コード（軽自動車検査協会「各帳票に表示する二次元コードの仕様書」2024.01.04 適用）
+   *   QR1つに1つのコード（分割なし）。先頭は “K” ／ バージョン2桁（1桁目がコード番号）。
+   *     コード1  K/02/輸出整理番号/車両番号(全角12)/車台番号(半角20・左詰)/型式指定番号
+   *     コード2  K/22/車両番号(全角12)/標板の枚数・大きさ/車台番号/原動機型式/帳票種別
+   *     コード3  K/32/打刻位置/型式指定番号/有効期間満了日(YYMMDD)/初度検査年月/型式/…
+   *     コード4・5  使用者の氏名・住所 → 個人情報なので中身は使わず、画面にも出さない
+   *     コード6・7  自動車の種別・重量など／車両ID → このアプリでは使わない
+   *   紙の車検証（令和5年12月まで）と自動車検査証記録事項はコード1〜6、
+   *   電子車検証はコード2・3（満了日は "999999" 固定）。
+   */
+  function parseKei(text) {
+    const p = text.split('/');
+    if (p[0] !== 'K' || !/^\d{2}$/.test(p[1] || '')) return null;
+    const code = p[1].charAt(0);
+    if (code === '5' || code === '6') return { kind: 'personal', kei: true };
+    if ((code === '2' || code === '0') && p.length >= 5) {
+      const plate = plateOf(code === '2' ? p[2] : p[3]);
+      const chassis = (p[4] || '').trim();
+      if (plate && chassis) return { kind: 'code2', kei: true, keiCode: code === '2' ? 2 : 1, plateNumber: plate, chassisNo: chassis };
+    }
+    if (code === '3' && p.length >= 7) {
+      const d = (p[4] || '').trim(), first = (p[5] || '').trim();
+      return {
+        kind: 'code3', kei: true,
+        shakenExpiry: /^\d{6}$/.test(d) && d !== '999999' ? `20${d.slice(0, 2)}-${d.slice(2, 4)}-${d.slice(4, 6)}` : '',
+        firstRegistration: /^\d{4}$/.test(first) && !/99$/.test(first) ? `20${first.slice(0, 2)}-${first.slice(2, 4)}` : '',
+        model: (p[6] || '').trim(),
+        typeDesignation: (p[3] || '').trim()
+      };
+    }
+    return { kind: 'kei-other', kei: true };
+  }
+
+  /** 中身の解析（軽自動車の形を先に見る。普通車の二次元コード3は形の決まりがゆるいため） */
+  function parse(text) {
+    return parseKei(text) || parseCode2(text) || parseCode3(text);
+  }
+
+  /** 分割していないQRを見分けるための短い値（中身そのものを鍵に残さない） */
+  function digest(bytes) {
+    let h = 0x811c9dc5;
+    bytes.forEach(b => { h ^= b; h = Math.imul(h, 0x01000193); });
+    return (h >>> 0).toString(36) + '-' + bytes.length;
+  }
+
+  /**
    * 読めたQRを貯めておき、分割されたQRがそろったら組み立てる。
    * 同じQRを何度読んでも1つとして数える。
    */
@@ -137,8 +203,13 @@
     add(sym) {
       // 組の見分けは「パリティ＋何個で1組か」。パリティは1バイトなので、2つ並び・3つ並びで
       // 偶然同じ値になることがある（約256台に1台）。個数も見ないと2つの組が混ざってしまう
-      const key = sym.parity !== null ? `${sym.parity}-${sym.total}-${sym.seq}` : 'single-' + sym.bytes.join(',');
+      const key = sym.parity !== null ? `${sym.parity}-${sym.total}-${sym.seq}` : 'single-' + digest(sym.bytes);
       if (this.symbols.has(key)) return false;
+      // 軽自動車のコード4・5（使用者の氏名・住所）は、中身を捨てて「読んだ」ことだけ覚える
+      if (sym.parity === null) {
+        const k = parseKei(sjis.decode(new Uint8Array(sym.bytes)));
+        if (k && k.kind === 'personal') sym = { seq: null, total: null, parity: null, bytes: [], personal: true };
+      }
       this.symbols.set(key, sym);
       return true;
     }
@@ -156,11 +227,13 @@
         const total = list[0].total || 1;
         const complete = list.length === total;
         let text = '', parsed = null;
-        if (complete) {
+        if (complete && list[0].personal) {
+          parsed = { kind: 'personal', kei: true };
+        } else if (complete) {
           const bytes = [];
           list.forEach(s => bytes.push(...s.bytes));
           text = sjis.decode(new Uint8Array(bytes));
-          parsed = parseCode2(text) || parseCode3(text);
+          parsed = parse(text);
         }
         return { have: list.length, total, complete, text, parsed };
       });
@@ -169,14 +242,15 @@
     /** そろった結果をまとめる（登録番号・車台番号・型式・満了日） */
     result() {
       const r = {};
-      this.groups().forEach(g => { if (g.parsed) Object.assign(r, g.parsed, { kind: undefined }); });
+      this.groups().forEach(g => {
+        if (g.parsed && (g.parsed.kind === 'code2' || g.parsed.kind === 'code3')) Object.assign(r, g.parsed, { kind: undefined });
+      });
       delete r.kind;
       return r;
     }
 
     get count() { return this.symbols.size; }
   }
-
-  VIS.shakenQr = { findAll, parseCode2, parseCode3, Collector };
+  VIS.shakenQr = { findAll, parse, parseCode2, parseCode3, parseKei, Collector };
 
 })(typeof window !== 'undefined' ? window : globalThis);

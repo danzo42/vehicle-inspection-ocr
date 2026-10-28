@@ -62,7 +62,7 @@
   const MODES = {
     certqr: {
       title: '車検証のQRで読み取る',
-      hint: '車検証の右下の小さなQR（2つ並びと3つ並び）を枠に入れてください。10〜15cmくらいの距離でピントが合うと、自動で読み取ります',
+      hint: '車検証の小さなQR（普通車は2つ並びと3つ並び、軽自動車は1つずつ並んだQR）を枠に入れてください。10〜15cmくらいの距離でピントが合うと、自動で読み取ります',
       aspect: 2.2,
       outputs: ['plateNumber', 'chassisNo', 'shakenExpiry'],
       qr: true,
@@ -294,10 +294,11 @@
         let sy = (g.top  - box.top  - my - offY) / scale;
         let sw = (g.width  + mx * 2) / scale;
         let sh = (g.height + my * 2) / scale;
-        sx = Math.max(0, sx); sy = Math.max(0, sy);
-        sw = Math.min(vw - sx, sw); sh = Math.min(vh - sy, sh);
+        // 整数の画素にそろえて、拡大縮小なしで写す（端数があると少しぼけて、小さなQRが読めなくなる）
+        sx = Math.max(0, Math.round(sx)); sy = Math.max(0, Math.round(sy));
+        sw = Math.min(vw - sx, Math.round(sw)); sh = Math.min(vh - sy, Math.round(sh));
         const c = target || document.createElement('canvas');
-        c.width = Math.round(sw); c.height = Math.round(sh);
+        c.width = sw; c.height = sh;
         c.getContext('2d', { willReadFrequently: !!target }).drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
         return c;
       }
@@ -337,15 +338,16 @@
       function checkQr(preview) {
         const st = qrState();
         const dots = (have, total) => Array.from({ length: total }, (_, i) => i < have ? '●' : '○').join('');
-        const c2 = st.code2 ? st.code2.have : 0, c3 = st.code3 ? st.code3.have : 0;
+        // 軽自動車のQRは分割なし（1個でそろう）ので、そろったら丸をすべて埋める
+        const c2 = st.code2 ? (st.code2.complete ? 2 : st.code2.have) : 0, c3 = st.code3 ? (st.code3.complete ? 3 : st.code3.have) : 0;
         let msg = `登録番号・車台番号 ${dots(c2, 2)}　満了日 ${dots(c3, 3)}`;
         const code2Done = !!(st.code2 && st.code2.complete);
         const code3Done = !!(st.code3 && st.code3.complete);
         // 読めたのに中身の形が想定と違うQR（古い形式の車検証など）があるか
         const unknown = collector.groups().some(g => g.complete && !g.parsed);
-        if (code2Done && !code3Done) msg += wantCode3 ? '\n3つ並びのQRを枠に入れてください' : '\n満了日のQR（3つ並び）を探しています…';
+        if (code2Done && !code3Done) msg += wantCode3 ? '\n満了日のQR（普通車は3つ並び）を枠に入れてください' : '\n満了日のQRを探しています…';
         else if (!code2Done && unknown) msg += '\nQRの形式が想定と違います。下の「文字で読む」をお使いください';
-        else if (!code2Done && c3 && !c2) msg += '\n2つ並びのQRも枠に入れてください';
+        else if (!code2Done && c3 && !c2) msg += '\n登録番号・車台番号のQR（普通車は2つ並び）も枠に入れてください';
         $('.ocr-qr-status').textContent = msg;
 
         if (!code2Done) return false;
@@ -377,7 +379,7 @@
         if (!results.shakenExpiry) {
           notes.shakenExpiry = p3
             ? 'このQRには車検満了日が入っていません（電子車検証のカードのQRは空欄です）。「自動車検査証記録事項」（A4の紙）のQRを読むか、手で入力してください。'
-            : '満了日のQR（3つ並び）が読めなかったため、車検満了日は入っていません。「満了日のQRも読む」で続けて読めます。';
+            : '満了日のQR（普通車は3つ並び）が読めなかったため、車検満了日は入っていません。「満了日のQRも読む」で続けて読めます。';
         }
         $('[data-act="more-qr"]').hidden = !!(results.shakenExpiry || p3);
         showResult({ texts: [], results, notes }, 'qr');
