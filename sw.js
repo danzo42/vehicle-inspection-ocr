@@ -9,7 +9,7 @@
  * ========================================================================== */
 
 const CACHE_PREFIX  = 'vis-ocr-';
-const CACHE_VERSION = CACHE_PREFIX + 'v8';
+const CACHE_VERSION = CACHE_PREFIX + 'v9';
 
 /** オフラインでも必ず動くよう、先に取っておくファイル */
 const PRECACHE = [
@@ -91,7 +91,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // ?id=DC4-0754 のような付加情報は無視してキャッシュを探す（同じ画面として扱う）
+  // ?id=DC4-0012 のような付加情報は無視してキャッシュを探す（同じ画面として扱う）
   const key = url.origin + url.pathname;
 
   if (IMMUTABLE.test(url.pathname)) {

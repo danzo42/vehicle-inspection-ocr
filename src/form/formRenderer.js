@@ -197,7 +197,7 @@
     return out;
   }
 
-  /** 管理番号の記号（DC4-0737 → DC4）から、対象車種を推定する。見つからなければ null */
+  /** 管理番号の記号（DC4-0012 → DC4）から、対象車種を推定する。見つからなければ null */
   function guessTarget(spec, vehicleId) {
     const prefix = util.prefixOf(util.normalizeVehicleId(vehicleId));
     return targetOptions(spec).find(t => (t.prefixes || []).includes(prefix)) || null;

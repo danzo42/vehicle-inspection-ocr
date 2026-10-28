@@ -14,9 +14,9 @@
     $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); },
 
     /**
-     * URLのクエリ文字列（?id=DC4-0737）を取り出す。
+     * URLのクエリ文字列（?id=DC4-0012）を取り出す。
      * 将来QRをURL形式にした場合に備え、id が無いときは
-     * パス末尾（/v/DC4-0737）も見に行きます。
+     * パス末尾（/v/DC4-0012）も見に行きます。
      */
     param(name) {
       const q = new URLSearchParams(location.search).get(name);
@@ -37,13 +37,13 @@
     /* -------------------------------------------------------------------------
      * QRコードから読んだ文字列を、車両IDの正しい形に整える。
      *
-     * 実機のQRは「DC4-0737」のようなプレーンテキストですが、
+     * 実機のQRは「DC4-0012」のようなプレーンテキストですが、
      * 端末や貼り替えの都合で次のような揺れが起こり得ます。
      *   ・前後に空白や改行が入る
-     *   ・小文字で読める（dc4-0737）
-     *   ・全角文字になっている（ＤＣ４－０７３７）
-     *   ・将来QRをURL化したときの "https://.../v/DC4-0737"
-     * これらをすべて "DC4-0737" に正規化します。
+     *   ・小文字で読める（dc4-0012）
+     *   ・全角文字になっている（ＤＣ４－００１２）
+     *   ・将来QRをURL化したときの "https://.../v/DC4-0012"
+     * これらをすべて "DC4-0012" に正規化します。
      * ---------------------------------------------------------------------- */
     normalizeVehicleId(raw) {
       if (raw == null) return '';
@@ -72,12 +72,12 @@
       return s;
     },
 
-    /** 車両IDの形になっているか（DC4-0737 / K1BOX-0114 など） */
+    /** 車両IDの形になっているか（DC4-0012 / K1BOX-0012 など） */
     looksLikeVehicleId(s) {
       return /^[A-Z0-9]{1,8}-\d{3,5}$/.test(s);
     },
 
-    /** 「DC4-0737」→「DC4」 */
+    /** 「DC4-0012」→「DC4」 */
     prefixOf(vehicleId) {
       const m = /^([A-Z0-9]+)-\d+$/.exec(vehicleId || '');
       return m ? m[1] : '';
@@ -103,7 +103,7 @@
       return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     },
 
-    /** 点検記録のID（例: 20260824-130500-DC4-0737） */
+    /** 点検記録のID（例: 20260824-130500-DC4-0012） */
     makeInspectionId(vehicleId) {
       const d = new Date();
       const p = n => String(n).padStart(2, '0');
@@ -133,7 +133,7 @@
 
     /**
      * 管理番号の記号から「車種」と「点検区分」を引く（config/app-config.js の prefixes）。
-     * 例）DC4-0754 → { prefix:'DC4', type:'4tダンプカー', cycle:'3month' }。表に無ければ null
+     * 例）DC4-0012 → { prefix:'DC4', type:'4tダンプカー', cycle:'3month' }。表に無ければ null
      */
     prefixInfo(vehicleId) {
       const p = util.prefixOf(vehicleId);

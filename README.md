@@ -12,4 +12,5 @@ https://danzo42.github.io/vehicle-inspection-ocr/
 - 外部サーバーと通信できない設定（Content-Security-Policy）にしています。
 
 同梱ライブラリ：Tesseract.js 5.1.1・tesseract.js-core 5.1.1・tessdata（Apache-2.0）、
-html5-qrcode（Apache-2.0）、jsPDF（MIT）
+html5-qrcode（Apache-2.0）、jsPDF（MIT）、
+jsQR 1.4.0（Apache-2.0。車検証の分割QRを読むため1か所改変。改変箇所は vendor/jsQR.js の先頭に記載）
